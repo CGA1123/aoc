@@ -10,24 +10,28 @@ import (
 	"strings"
 )
 
-func sum(i []int) int {
-	result := 0
+func reduce(base int, f func(int, int) int) func([]int) int {
+	return func(list []int) int {
+		result := base
 
-	for _, j := range i {
-		result = result + j
+		for _, i := range list {
+			result = f(result, i)
+		}
+
+		return result
 	}
+}
 
-	return result
+func sum(i []int) int {
+	return reduce(0, func(a, b int) int {
+		return a + b
+	})(i)
 }
 
 func product(i []int) int {
-	result := 1
-
-	for _, j := range i {
-		result = result * j
-	}
-
-	return result
+	return reduce(1, func(a, b int) int {
+		return a * b
+	})(i)
 }
 
 func buildCombo(indices, list []int) []int {
