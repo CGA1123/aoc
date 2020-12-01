@@ -107,7 +107,7 @@ func main() {
 	var i int
 	var e error
 
-	for e == nil {
+	for {
 		i, e = readInt(r)
 		if e != nil {
 			break
