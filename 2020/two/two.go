@@ -9,27 +9,33 @@ import (
 	"strings"
 )
 
-func valid(r *bufio.Reader, min, max int, pat byte) (bool, error) {
-	matches := 0
-	var b byte
-	var err error
-
-	for {
-		b, err = r.ReadByte()
-		if err != nil {
-			return false, err
-		}
-
-		if b == '\n' {
-			break
-		}
-
+func partOne(bytes []byte, min, max int, pat byte) bool {
+	var matches int
+	for _, b := range bytes {
 		if b == pat {
 			matches = matches + 1
 		}
 	}
 
-	return (min <= matches) && (matches <= max), nil
+	return (min <= matches) && (matches <= max)
+}
+
+func partTwo(bytes []byte, i, j int, pat byte) bool {
+	size := len(bytes) - 1 // new line character
+
+	ib := i < size && bytes[i] == pat
+	ij := j < size && bytes[j] == pat
+
+	return ib != ij
+}
+
+func valid(r *bufio.Reader, min, max int, pat byte) (bool, bool, error) {
+	bytes, err := r.ReadBytes('\n')
+	if err != nil {
+		return false, false, err
+	}
+
+	return partOne(bytes, min, max, pat), partTwo(bytes, min-1, max-1, pat), nil
 }
 
 func readInt(r *bufio.Reader, delim byte) (int, error) {
@@ -60,7 +66,8 @@ func main() {
 
 	var err error
 	r := bufio.NewReader(f)
-	count := 0
+	var partOne int
+	var partTwo int
 
 	for {
 		min, err := readInt(r, '-')
@@ -84,13 +91,17 @@ func main() {
 			break
 		}
 
-		b, err := valid(r, min, max, pat)
+		b, c, err := valid(r, min, max, pat)
 		if err != nil {
 			break
 		}
 
 		if b {
-			count = count + 1
+			partOne = partOne + 1
+		}
+
+		if c {
+			partTwo = partTwo + 1
 		}
 	}
 	if err != nil && err != io.EOF {
@@ -98,5 +109,6 @@ func main() {
 		return
 	}
 
-	log.Printf("count: %v", count)
+	log.Printf("count (pt 1): %v", partOne)
+	log.Printf("count (pt 2): %v", partTwo)
 }
