@@ -21,7 +21,7 @@ func partOne(graph map[string][]string, node string) int {
 	visited := map[string]struct{}{}
 
 	queue := list.New()
-	queue.PushBack("shiny gold")
+	queue.PushBack(node)
 
 	for queue.Len() > 0 {
 		el := queue.Front()
