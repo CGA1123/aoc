@@ -44,11 +44,6 @@ func (p *Program) Step() bool {
 	return true
 }
 
-func Cycle(p *Program) (bool, int) {
-
-	return false, 0
-}
-
 func Run(p *Program) (bool, []int) {
 	alreadyRan := map[int]struct{}{}
 	var exec []int
@@ -66,6 +61,17 @@ func Run(p *Program) (bool, []int) {
 			return true, exec
 		}
 	}
+}
+
+func Flip(i Instruction) Instruction {
+	var newOp string
+	if i.Op == "jmp" {
+		newOp = "nop"
+	} else {
+		newOp = "jmp"
+	}
+
+	return Instruction{Op: newOp, Arg: i.Arg}
 }
 
 func main() {
@@ -103,27 +109,17 @@ func main() {
 		}
 	}
 
-	newInstructions := make([]Instruction, len(instructions))
-
 	// for every jmp/nop flip it and see if it terminates
 	for _, i := range contenders {
-		copy(newInstructions, instructions)
+		instructions[i] = Flip(instructions[i])
 
-		ins := newInstructions[i]
-		var newOp string
-		if ins.Op == "jmp" {
-			newOp = "nop"
-		} else {
-			newOp = "jmp"
-		}
-
-		newInstructions[i] = Instruction{Op: newOp, Arg: ins.Arg}
-
-		attempt := &Program{Instructions: newInstructions}
-
-		terminated, _ := Run(attempt)
-		if terminated {
+		attempt := &Program{Instructions: instructions}
+		if terminated, _ := Run(attempt); terminated {
 			log.Printf("pt(2): %v", attempt.Acc)
+			return
 		}
+
+		// unclobber
+		instructions[i] = Flip(instructions[i])
 	}
 }
