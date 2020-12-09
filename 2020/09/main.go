@@ -14,7 +14,7 @@ func Init(ciphertext []int, preamble int) []map[int]struct{} {
 	for i := 0; i < preamble; i++ {
 		valid = append(valid, map[int]struct{}{})
 
-		for j := 0; j < preamble; j++ {
+		for j := i; j < preamble; j++ {
 			if i == j {
 				continue
 			}
@@ -40,15 +40,18 @@ func Valid(valid []map[int]struct{}, val int) bool {
 }
 
 // Next builds the set of valid integers based on the current index
-func Next(ciphertext []int, preamble, i int) map[int]struct{} {
-	next := map[int]struct{}{}
-	val := ciphertext[i]
-	for j := 1; j < preamble; j++ {
-		other := ciphertext[i-j]
-		next[other+val] = struct{}{}
+func Next(ciphertext []int, valid []map[int]struct{}, i int) []map[int]struct{} {
+	for j := 1; j < len(valid); j++ {
+		idx := i - len(valid) + j
+		other := ciphertext[idx]
+
+		valid[j][other+ciphertext[i]] = struct{}{}
 	}
 
-	return next
+	valid = append(valid, map[int]struct{}{})
+	valid = valid[1:]
+
+	return valid
 }
 
 // Attempt tries to find a contiguous set of integers in the sequence that sum
@@ -110,8 +113,7 @@ func main() {
 			break
 		}
 
-		valid = append(valid, Next(ciphertext, preamble, i))
-		valid = valid[1:]
+		valid = Next(ciphertext, valid, i)
 	}
 
 	for i := 0; i < len(ciphertext)-1; i++ {
