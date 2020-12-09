@@ -8,30 +8,40 @@ import (
 	"strconv"
 )
 
-// Init initialises the set of valid integers based on the preamble
-func Init(ciphertext []int, preamble int) []map[int]struct{} {
-	var valid []map[int]struct{}
-	for i := 0; i < preamble; i++ {
-		valid = append(valid, map[int]struct{}{})
+type XMASEncryption struct {
+	data     []int
+	valid    map[int]map[int]struct{}
+	preamble int
+	idx      int
+}
 
-		for j := i; j < preamble; j++ {
-			if i == j {
-				continue
-			}
+func NewXMASEncryption(data []int, preamble int) *XMASEncryption {
+	x := &XMASEncryption{
+		data:     data,
+		preamble: preamble,
+		idx:      preamble,
+		valid:    map[int]map[int]struct{}{}}
 
-			val := ciphertext[i] + ciphertext[j]
+	return x.init()
+}
 
-			valid[i][val] = struct{}{}
+func (x *XMASEncryption) init() *XMASEncryption {
+	for i := 0; i < x.idx; i++ {
+		x.valid[i] = map[int]struct{}{}
+
+		for j := i + 1; j < x.idx; j++ {
+			xal := x.data[i] + x.data[j]
+
+			x.valid[i][xal] = struct{}{}
 		}
 	}
 
-	return valid
+	return x
 }
 
-// Valid checks whether an integer is valid
-func Valid(valid []map[int]struct{}, val int) bool {
-	for _, v := range valid {
-		if _, ok := v[val]; ok {
+func (x *XMASEncryption) contains(i int) bool {
+	for _, x := range x.valid {
+		if _, ok := x[i]; ok {
 			return true
 		}
 	}
@@ -39,19 +49,30 @@ func Valid(valid []map[int]struct{}, val int) bool {
 	return false
 }
 
-// Next builds the set of valid integers based on the current index
-func Next(ciphertext []int, valid []map[int]struct{}, i int) []map[int]struct{} {
-	for j := 1; j < len(valid); j++ {
-		idx := i - len(valid) + j
-		other := ciphertext[idx]
+func (x *XMASEncryption) next() {
+	delete(x.valid, x.idx-x.preamble)
 
-		valid[j][other+ciphertext[i]] = struct{}{}
+	x.idx = x.idx + 1
+
+	for k := range x.valid {
+		x.valid[k][x.data[k]+x.data[x.idx]] = struct{}{}
 	}
 
-	valid = append(valid, map[int]struct{}{})
-	valid = valid[1:]
+	x.valid[x.idx] = map[int]struct{}{}
+}
 
-	return valid
+func (x *XMASEncryption) Crack() (int, bool) {
+	for i := x.preamble; i < len(x.data); i++ {
+		val := x.data[i]
+
+		if !x.contains(val) {
+			return val, true
+		}
+
+		x.next()
+	}
+
+	return 0, false
 }
 
 // Attempt tries to find a contiguous set of integers in the sequence that sum
@@ -102,19 +123,12 @@ func main() {
 		return
 	}
 
-	valid := Init(ciphertext, preamble)
-	var toFind int
-	for i := preamble; i < len(ciphertext); i++ {
-		val := ciphertext[i]
-
-		if !Valid(valid, val) {
-			log.Printf("pt(1): %v", val)
-			toFind = val
-			break
-		}
-
-		valid = Next(ciphertext, valid, i)
+	toFind, ok := NewXMASEncryption(ciphertext, preamble).Crack()
+	if !ok {
+		log.Printf("couldn't crack encryption!")
+		return
 	}
+	log.Printf("pt(1): %v", toFind)
 
 	for i := 0; i < len(ciphertext)-1; i++ {
 		ok, start, end := Attempt(ciphertext, i, toFind)
