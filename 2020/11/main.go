@@ -43,19 +43,27 @@ func southwest(y, x int) (int, int) {
 	return south(west(y, x))
 }
 
-func southeast(y, x int) (int, int) {
-	return south(east(y, x))
+func steps(s ...func(int, int) (int, int)) func(int, int) (int, int) {
+	return func(y, x int) (int, int) {
+		yi, xi := y, x
+
+		for _, step := range s {
+			yi, xi = step(yi, xi)
+		}
+
+		return yi, xi
+	}
 }
 
-func northwest(y, x int) (int, int) {
-	return north(west(y, x))
-}
-
-func northeast(y, x int) (int, int) {
-	return north(east(y, x))
-}
-
-var directions = []func(int, int) (int, int){west, east, north, south, southwest, southeast, northeast, northwest}
+var directions = []func(int, int) (int, int){
+	west,
+	east,
+	north,
+	south,
+	steps(south, west),
+	steps(south, east),
+	steps(north, west),
+	steps(north, east)}
 
 const (
 	Occupied = '#'
