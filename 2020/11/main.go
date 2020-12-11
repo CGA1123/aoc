@@ -39,10 +39,6 @@ func south(y, x int) (int, int) {
 	return y + 1, x
 }
 
-func southwest(y, x int) (int, int) {
-	return south(west(y, x))
-}
-
 func steps(s ...func(int, int) (int, int)) func(int, int) (int, int) {
 	return func(y, x int) (int, int) {
 		yi, xi := y, x
