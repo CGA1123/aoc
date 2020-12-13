@@ -48,8 +48,6 @@ func (ic *Intcode) Do() bool {
 
 	modes := parameterModes(code)
 
-	// log.Print64f("%v", code)
-
 	switch op := opcode(code); op {
 	case 9:
 		ic.rel(modes)
