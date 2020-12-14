@@ -16,6 +16,22 @@ type Out interface {
 	Write(int64)
 }
 
+type ChanIO struct {
+	ch chan int64
+}
+
+func NewChanIO(buffer int) *ChanIO {
+	return &ChanIO{ch: make(chan int64, buffer)}
+}
+
+func (c *ChanIO) Read() int64 {
+	return <-c.ch
+}
+
+func (c *ChanIO) Write(i int64) {
+	c.ch <- i
+}
+
 type Intcode struct {
 	pc      int64
 	id      int64
