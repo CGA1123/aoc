@@ -133,9 +133,6 @@ func main() {
 		return
 	}
 
-	// TODO
-	// traverse grid
-
 	most, point := PartOne(grid)
 	log.Printf("pt(1) (%v, %v): %v", point.X, point.Y, most)
 
