@@ -6,83 +6,10 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
+
+	"github.com/CGA1123/aoc"
 )
-
-type Set struct {
-	set map[interface{}]bool
-}
-
-func NewSet() *Set {
-	return &Set{set: map[interface{}]bool{}}
-}
-
-func (s *Set) Add(e interface{}) {
-	s.set[e] = true
-}
-
-func (s *Set) Remove(e interface{}) {
-	delete(s.set, e)
-}
-
-func (s *Set) Contains(e interface{}) bool {
-	_, ok := s.set[e]
-
-	return ok
-}
-
-func (s *Set) Size() int {
-	return len(s.set)
-}
-
-func (s *Set) Elements() []interface{} {
-	var el []interface{}
-
-	for k := range s.set {
-		el = append(el, k)
-	}
-
-	return el
-}
-
-func MustParse(s string) int64 {
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		panic("bad input")
-	}
-
-	return i
-}
-
-func Capture(r *regexp.Regexp, s string) map[string]string {
-	m := map[string]string{}
-	names := r.SubexpNames()
-	for _, match := range r.FindAllStringSubmatch(s, -1) {
-		for i, submatch := range match {
-			name := names[i]
-			if name == "" {
-				continue
-			}
-
-			m[name] = submatch
-		}
-	}
-
-	return m
-}
-
-func Between(min, max int64) func(int64) bool {
-	return func(i int64) bool {
-		return min <= i && i <= max
-	}
-}
-
-func Or(f, g func(int64) bool) func(int64) bool {
-	return func(i int64) bool {
-		return f(i) || g(i)
-	}
-}
 
 var ruleregex = regexp.MustCompile(`(?P<field>.*): (?P<loa>\d+)-(?P<hia>\d+) or (?P<lob>\d+)-(?P<hib>\d+)`)
 
@@ -136,7 +63,7 @@ func ValidTickets(tickets [][]int64, rules []*Rule) [][]int64 {
 	return v
 }
 
-func FindField(tickets [][]int64, rules []*Rule, i int) *Set {
+func FindField(tickets [][]int64, rules []*Rule, i int) *aoc.Set {
 	allTickets := func(t [][]int64, rule *Rule, i int) bool {
 		for _, ticket := range t {
 			if !rule.Satisfied(ticket[i]) {
@@ -147,7 +74,7 @@ func FindField(tickets [][]int64, rules []*Rule, i int) *Set {
 		return true
 	}
 
-	set := NewSet()
+	set := aoc.NewSet()
 	for _, rule := range rules {
 		if allTickets(tickets, rule, i) {
 			set.Add(rule.Field)
@@ -157,15 +84,13 @@ func FindField(tickets [][]int64, rules []*Rule, i int) *Set {
 	return set
 }
 
-// TODO cleanup :thinking:
-
 type solve struct {
-	set *Set
+	set *aoc.Set
 	idx int
 }
 
-func Solve(fields []*Set) []string {
-	found := NewSet()
+func Solve(fields []*aoc.Set) []string {
+	found := aoc.NewSet()
 
 	o := map[int]solve{}
 	names := make([]string, len(fields))
@@ -193,7 +118,7 @@ func Solve(fields []*Set) []string {
 func PartTwo(mine []int64, tickets [][]int64, rules []*Rule) int64 {
 	validTickets := append(ValidTickets(tickets, rules), mine)
 
-	var fields []*Set
+	var fields []*aoc.Set
 
 	for i := 0; i < len(mine); i++ {
 		fields = append(fields, FindField(validTickets, rules, i))
@@ -221,12 +146,13 @@ func main() {
 	var rules []*Rule
 
 	scanRule := func(s string) {
-		m := Capture(ruleregex, s)
-		loa, hia, lob, hib := MustParse(m["loa"]), MustParse(m["hia"]), MustParse(m["lob"]), MustParse(m["hib"])
+		m := aoc.Capture(ruleregex, s)
+		loa, hia := aoc.MustParse(m["loa"]), aoc.MustParse(m["hia"])
+		lob, hib := aoc.MustParse(m["lob"]), aoc.MustParse(m["hib"])
 
 		rules = append(rules, &Rule{
 			Field:     m["field"],
-			Satisfied: Or(Between(loa, hia), Between(lob, hib)),
+			Satisfied: aoc.Or(aoc.Between(loa, hia), aoc.Between(lob, hib)),
 		})
 	}
 
@@ -242,7 +168,7 @@ func main() {
 		var ticket []int64
 
 		for _, i := range strings.Split(s, ",") {
-			ticket = append(ticket, MustParse(i))
+			ticket = append(ticket, aoc.MustParse(i))
 		}
 
 		return ticket

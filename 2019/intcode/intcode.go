@@ -16,12 +16,32 @@ type Out interface {
 	Write(int64)
 }
 
+// NullIO
+type NullIO struct{}
+
+func NewNullIO() *NullIO {
+	return &NullIO{}
+}
+
+func (r *NullIO) Read() int64 {
+	panic("NullIO was read.")
+}
+
+func (r *NullIO) Write(i int64) {
+	panic("NullIO was writter.")
+}
+
+// ChanIO
 type ChanIO struct {
 	ch chan int64
 }
 
 func NewChanIO(buffer int) *ChanIO {
 	return &ChanIO{ch: make(chan int64, buffer)}
+}
+
+func (c *ChanIO) Chan() chan int64 {
+	return c.ch
 }
 
 func (c *ChanIO) Read() int64 {
@@ -32,6 +52,7 @@ func (c *ChanIO) Write(i int64) {
 	c.ch <- i
 }
 
+// Intcode
 type Intcode struct {
 	pc      int64
 	id      int64
