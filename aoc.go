@@ -103,3 +103,74 @@ func Scanner(input string, fn func(*bufio.Scanner)) error {
 
 	return s.Err()
 }
+
+type Point struct {
+	X int64
+	Y int64
+}
+
+type Grid struct {
+	minx int64
+	maxx int64
+	miny int64
+	maxy int64
+	grid map[Point]interface{}
+}
+
+func NewGrid() *Grid {
+	return &Grid{grid: map[Point]interface{}{}}
+}
+
+func (h *Grid) Read(x, y int64) interface{} {
+	return h.grid[Point{X: x, Y: y}]
+}
+
+func (h *Grid) Write(x, y int64, i interface{}) {
+	if x > h.maxx {
+		h.maxx = x
+	}
+
+	if y > h.maxy {
+		h.maxy = y
+	}
+
+	if x < h.minx {
+		h.minx = x
+	}
+
+	if y < h.miny {
+		h.miny = y
+	}
+
+	h.grid[Point{X: x, Y: y}] = i
+}
+
+func (h *Grid) Grid() [][]interface{} {
+	var grid [][]interface{}
+
+	h.EachLine(func(line []interface{}) {
+		grid = append(grid, line)
+	})
+
+	return grid
+}
+
+func (h *Grid) EachLine(fn func([]interface{})) {
+	for y := h.miny; y <= h.maxy; y++ {
+		var line []interface{}
+
+		for x := h.minx; x <= h.maxx; x++ {
+			line = append(line, h.grid[Point{X: x, Y: y}])
+		}
+
+		fn(line)
+	}
+}
+
+func (h *Grid) Each(fn func(interface{})) {
+	for y := h.miny; y <= h.maxy; y++ {
+		for x := h.minx; x <= h.maxx; x++ {
+			fn(h.grid[Point{X: x, Y: y}])
+		}
+	}
+}

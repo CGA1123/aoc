@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/CGA1123/aoc"
 	"github.com/CGA1123/aoc/2019/intcode"
 )
 
@@ -15,64 +16,8 @@ var tiles = map[int64]string{
 	3: "_",
 	4: "o"}
 
-type Point struct {
-	X int64
-	Y int64
-}
-
-type Grid struct {
-	minx int64
-	maxx int64
-	miny int64
-	maxy int64
-	grid map[Point]int64
-}
-
-func NewGrid() *Grid {
-	return &Grid{grid: map[Point]int64{}}
-}
-
-func (h *Grid) Read(x, y int64) int64 {
-	return h.grid[Point{X: x, Y: y}]
-}
-
-func (h *Grid) Write(x, y, i int64) {
-	if x > h.maxx {
-		h.maxx = x
-	}
-
-	if y > h.maxy {
-		h.maxy = y
-	}
-
-	if x < h.minx {
-		h.minx = x
-	}
-
-	if y < h.miny {
-		h.miny = y
-	}
-
-	h.grid[Point{X: x, Y: y}] = i
-}
-
-func (h *Grid) Grid() [][]int64 {
-	var grid [][]int64
-
-	for y := h.maxy; y >= h.miny; y-- {
-		var line []int64
-		for x := h.minx; x <= h.maxx; x++ {
-			line = append(line, h.grid[Point{X: x, Y: y}])
-		}
-
-		grid = append(grid, line)
-	}
-
-	return grid
-}
-
 func PartOne(mem []int64) int64 {
-	grid := NewGrid()
+	grid := aoc.NewGrid()
 	out := intcode.NewChanIO(3)
 	ic := intcode.New(mem, intcode.NewNullIO(), out, 0)
 
@@ -99,15 +44,12 @@ func PartOne(mem []int64) int64 {
 	wg.Wait()
 	close(out.Chan())
 
-	g := grid.Grid()
 	var c int64
-	for y := 0; y < len(g); y++ {
-		for x := 0; x < len(g[y]); x++ {
-			if g[y][x] == 2 {
-				c++
-			}
+	grid.Each(func(el interface{}) {
+		if el != nil && el.(int64) == 2 {
+			c++
 		}
-	}
+	})
 
 	return c
 }
@@ -115,7 +57,7 @@ func PartOne(mem []int64) int64 {
 type Game struct {
 	paddleX int64
 	ballX   int64
-	grid    *Grid
+	grid    *aoc.Grid
 	score   int64
 	i       int64
 	buf     [3]int64
@@ -123,7 +65,7 @@ type Game struct {
 
 func (j *Game) Read() int64 {
 
-	PrintGrid(j.grid.Grid())
+	PrintGrid(j.grid)
 	fmt.Printf("score: %v\n", j.score)
 
 	if j.ballX == j.paddleX {
@@ -159,20 +101,25 @@ func (j *Game) Write(i int64) {
 	}
 }
 
-func PrintGrid(g [][]int64) {
-	fmt.Printf("\033[2;0H")
+func PrintGrid(g *aoc.Grid) {
+	fmt.Printf("\033[4;0H")
 
-	for y := len(g) - 1; y >= 0; y-- {
-		for x := 0; x < len(g[y]); x++ {
-			fmt.Printf("%v", tiles[g[y][x]])
+	g.EachLine(func(line []interface{}) {
+		for _, el := range line {
+			if el == nil {
+				el = 0
+			}
+
+			fmt.Printf("%v", tiles[el.(int64)])
 		}
+
 		fmt.Printf("\n")
-	}
+	})
 }
 
 func PartTwo(mem []int64) int64 {
 	mem[0] = 2
-	grid := NewGrid()
+	grid := aoc.NewGrid()
 
 	in := &Game{grid: grid, buf: [3]int64{}}
 	ic := intcode.New(mem, in, in, 0)
