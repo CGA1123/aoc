@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 
@@ -135,15 +134,9 @@ func PartTwo(mine []int64, tickets [][]int64, rules []*Rule) int64 {
 }
 
 func main() {
-	f, err := os.Open("input.txt")
-	if err != nil {
-		log.Printf("opening file: %v", err)
-		return
-	}
-	defer f.Close()
-
-	s := bufio.NewScanner(bufio.NewReader(f))
 	var rules []*Rule
+	var mine []int64
+	var nearby [][]int64
 
 	scanRule := func(s string) {
 		m := aoc.Capture(ruleregex, s)
@@ -174,9 +167,6 @@ func main() {
 		return ticket
 	}
 
-	var mine []int64
-	var nearby [][]int64
-
 	scanMyTicket := func(s *bufio.Scanner) {
 		s.Scan()
 		if s.Text() != "your ticket:" {
@@ -203,9 +193,11 @@ func main() {
 		}
 	}
 
-	scanRules(s)
-	scanMyTicket(s)
-	scanNearby(s)
+	aoc.Scanner("input.txt", func(s *bufio.Scanner) {
+		scanRules(s)
+		scanMyTicket(s)
+		scanNearby(s)
+	})
 
 	log.Printf("pt(1) %v", PartOne(nearby, rules))
 	log.Printf("pt(2) %v", PartTwo(mine, nearby, rules))

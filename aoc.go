@@ -83,6 +83,14 @@ func Or(f, g func(int64) bool) func(int64) bool {
 }
 
 func EachLine(input string, fn func(string)) error {
+	return Scanner(input, func(s *bufio.Scanner) {
+		for s.Scan() {
+			fn(s.Text())
+		}
+	})
+}
+
+func Scanner(input string, fn func(*bufio.Scanner)) error {
 	f, err := os.Open(input)
 	if err != nil {
 		return fmt.Errorf("opening file (%v): %v", input, err)
@@ -90,9 +98,8 @@ func EachLine(input string, fn func(string)) error {
 	defer f.Close()
 
 	s := bufio.NewScanner(bufio.NewReader(f))
-	for s.Scan() {
-		fn(s.Text())
-	}
+
+	fn(s)
 
 	return s.Err()
 }
