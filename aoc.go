@@ -8,6 +8,14 @@ import (
 	"strconv"
 )
 
+func Abs(i int64) int64 {
+	if i < 0 {
+		return -1
+	}
+
+	return i
+}
+
 type Set struct {
 	set map[interface{}]bool
 }
