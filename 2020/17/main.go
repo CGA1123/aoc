@@ -37,59 +37,53 @@ func (p PointND) Equal(o PointND) bool {
 	return true
 }
 
+func (p PointND) Add(o PointND) PointND {
+	n := make([]int64, len(p))
+
+	for i, pi := range p {
+		n[i] = pi + o[i]
+	}
+
+	return PointND(n)
+}
+
 type GridND struct {
-	grid map[string]interface{}
-	min  []int64
-	max  []int64
-	n    int64
+	grid map[string]element
+}
+
+type element struct {
+	el    interface{}
+	point PointND
 }
 
 func NewGridND(n int64) *GridND {
-	return &GridND{grid: map[string]interface{}{},
-		n:   n,
-		min: make([]int64, n),
-		max: make([]int64, n)}
+	return &GridND{grid: map[string]element{}}
 }
 
 func (g *GridND) Read(p PointND) interface{} {
-	return g.grid[p.Key()]
-}
-
-func (g *GridND) genEach(current []int64, buf int64, fn func(PointND, interface{})) {
-	idx := len(current)
-
-	if int64(idx) == g.n {
-		point := PointND(current)
-
-		fn(point, g.grid[point.Key()])
-		return
+	if elem, ok := g.grid[p.Key()]; ok {
+		return elem.el
 	}
 
-	for i := g.min[idx] - buf; i <= g.max[idx]+buf; i++ {
-		candidate := make([]int64, len(current))
-		copy(candidate, current)
-
-		g.genEach(append(candidate, i), buf, fn)
-	}
+	return nil
 }
 
-func (g *GridND) Each(buf int64, fn func(PointND, interface{})) {
-	g.genEach([]int64{}, buf, fn)
+func (g *GridND) EachSparse(fn func(PointND, interface{})) {
+	for _, v := range g.grid {
+		fn(v.point, v.el)
+	}
 }
 
 func (g *GridND) Write(point PointND, el interface{}) {
-	for i, c := range point {
-		if c < g.min[i] {
-			g.min[i] = c
-		}
+	g.grid[point.Key()] = element{el: el, point: point}
+}
 
-		if c > g.max[i] {
-			g.max[i] = c
-		}
+func (g *GridND) Remove(point PointND) {
+	delete(g.grid, point.Key())
+}
 
-	}
-
-	g.grid[point.Key()] = el
+func (g *GridND) Size() int {
+	return len(g.grid)
 }
 
 func genNeighbour(original, current PointND, idx int) []PointND {
@@ -125,10 +119,11 @@ func NeighboursND(point PointND) []PointND {
 	return genNeighbour(point, candidate, 0)
 }
 
-func ActiveNeighbours(grid *GridND, point PointND) int {
+func ActiveNeighbours(grid *GridND, point PointND, neighbours []PointND) int {
 	var c int
 
-	for _, n := range NeighboursND(point) {
+	for _, p := range neighbours {
+		n := point.Add(p)
 		el := grid.Read(n)
 		if el == nil || el.(byte) == Inactive {
 			continue
@@ -152,21 +147,29 @@ func NewState(el byte, count int) byte {
 	return Inactive
 }
 
-func CountActive(g *GridND) int {
-	var c int
+func Tick(grid, tmp *GridND, point PointND, el interface{}, neighbours []PointND, ticked map[string]bool) {
+	if _, ok := ticked[point.Key()]; ok {
+		return
+	}
 
-	g.Each(0, func(point PointND, el interface{}) {
-		if el != nil && el.(byte) == Active {
-			c++
-		}
-	})
+	ticked[point.Key()] = true
 
-	return c
+	activeNeighbours := ActiveNeighbours(grid, point, neighbours)
+	if el == nil {
+		el = Inactive
+	}
+
+	if next := NewState(el.(byte), activeNeighbours); next == Active {
+		tmp.Write(point, next)
+	} else {
+		tmp.Remove(point)
+	}
 }
 
 func Do(dimensions int64) int {
 	var tmp *GridND
 	grid := NewGridND(dimensions)
+	neighbours := NeighboursND(make([]int64, dimensions))
 
 	var y int64
 
@@ -176,7 +179,9 @@ func Do(dimensions int64) int {
 			coords[0] = int64(x)
 			coords[1] = y
 
-			grid.Write(PointND(coords), byte(b))
+			if b == Active {
+				grid.Write(PointND(coords), b)
+			}
 		}
 
 		y++
@@ -184,22 +189,22 @@ func Do(dimensions int64) int {
 
 	for t := 0; t < 6; t++ {
 		tmp = NewGridND(dimensions)
+		ticked := map[string]bool{}
 
-		grid.Each(1, func(point PointND, el interface{}) {
-			activeNeighbours := ActiveNeighbours(grid, point)
-			if el == nil {
-				el = Inactive
+		grid.EachSparse(func(point PointND, el interface{}) {
+			Tick(grid, tmp, point, el, neighbours, ticked)
+
+			for _, n := range neighbours {
+				neighbour := point.Add(n)
+
+				Tick(grid, tmp, neighbour, grid.Read(neighbour), neighbours, ticked)
 			}
-
-			next := NewState(el.(byte), activeNeighbours)
-
-			tmp.Write(point, next)
 		})
 
 		tmp, grid = nil, tmp
 	}
 
-	return CountActive(grid)
+	return grid.Size()
 }
 
 func main() {
