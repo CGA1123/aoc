@@ -74,6 +74,38 @@ func (or *OrRule) Compile(rules map[int64]Rule) string {
 	return fmt.Sprintf("(%v|%v)", a, b)
 }
 
+type RepeatRule struct {
+	rule int64
+}
+
+func (r *RepeatRule) Compile(rules map[int64]Rule) string {
+	return fmt.Sprintf("(%v)+", rules[r.rule].Compile(rules))
+}
+
+type BoundedBalancingRule struct {
+	left  int64
+	right int64
+	bound int
+}
+
+func (b *BoundedBalancingRule) Compile(rules map[int64]Rule) string {
+	var parts []string
+
+	for i := 1; i < b.bound; i++ {
+		part := ""
+		for j := 0; j < i; j++ {
+			part += fmt.Sprintf("(%v)", rules[b.left].Compile(rules))
+		}
+		for j := 0; j < i; j++ {
+			part += fmt.Sprintf("(%v)", rules[b.right].Compile(rules))
+		}
+
+		parts = append(parts, fmt.Sprintf("(%v)", part))
+	}
+
+	return fmt.Sprintf("(%v)", strings.Join(parts, "|"))
+}
+
 var RuleExp = map[*regexp.Regexp]func(string) (int64, Rule){
 	CharacterRuleExp: ParseCharacterRule,
 	OrRuleExp:        ParseOrRule,
@@ -165,4 +197,9 @@ func main() {
 	})
 
 	log.Printf("pt(1): %v", Matches(rules, data))
+
+	rules[8] = &RepeatRule{rule: 42}
+	rules[11] = &BoundedBalancingRule{bound: 10, left: 42, right: 31}
+
+	log.Printf("pt(2): %v", Matches(rules, data))
 }
