@@ -48,14 +48,6 @@ func (seq *SequenceRule) Compile(rules map[int64]Rule) string {
 	return str
 }
 
-type RegexpRule struct {
-	exp string
-}
-
-func (r *RegexpRule) Compile(rules map[int64]Rule) string {
-	return r.exp
-}
-
 type OrRule struct {
 	a, b []int64
 }
