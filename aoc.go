@@ -182,3 +182,21 @@ func (h *Grid) Each(fn func(interface{})) {
 		}
 	}
 }
+
+func (h *Grid) EachSparse(fn func(Point, interface{})) {
+	for point, element := range h.grid {
+		fn(point, element)
+	}
+}
+
+func (h *Grid) Height() int64 {
+	return h.maxy - h.miny + 1
+}
+
+func (h *Grid) Width() int64 {
+	return h.maxx - h.minx + 1
+}
+
+func (h *Grid) Count() int64 {
+	return int64(len(h.grid))
+}
