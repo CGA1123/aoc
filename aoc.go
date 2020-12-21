@@ -20,6 +20,42 @@ type Set struct {
 	set map[interface{}]bool
 }
 
+func Intersection(sets ...*Set) *Set {
+	n := NewSet()
+
+	allContain := func(el interface{}) bool {
+		for _, set := range sets {
+			if !set.Contains(el) {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	for _, seta := range sets {
+		for _, el := range seta.Elements() {
+			if allContain(el) {
+				n.Add(el)
+			}
+		}
+	}
+
+	return n
+}
+
+func Union(sets ...*Set) *Set {
+	n := NewSet()
+
+	for _, set := range sets {
+		for _, el := range set.Elements() {
+			n.Add(el)
+		}
+	}
+
+	return n
+}
+
 func NewSet() *Set {
 	return &Set{set: map[interface{}]bool{}}
 }
