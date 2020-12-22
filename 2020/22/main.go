@@ -14,8 +14,8 @@ type Deck struct {
 	cards  []int64
 }
 
-func NewDeck(player int64) *Deck {
-	return &Deck{player: player, cards: make([]int64, 0, 100)}
+func NewDeck(player int64, size int) *Deck {
+	return &Deck{player: player, cards: make([]int64, size, 100)}
 }
 
 func CopyDeck(d *Deck) *Deck {
@@ -134,15 +134,9 @@ func (rc *RecursiveCombat) state() state {
 func (rc *RecursiveCombat) subGame(sa, sb int64) *Deck {
 	ac, bc := rc.a.Cards()[:sa], rc.b.Cards()[:sb]
 
-	ad, bd := NewDeck(rc.a.Player()), NewDeck(rc.b.Player())
-
-	for _, card := range ac {
-		ad.Add(card)
-	}
-
-	for _, card := range bc {
-		bd.Add(card)
-	}
+	ad, bd := NewDeck(rc.a.Player(), len(ac)), NewDeck(rc.b.Player(), len(bc))
+	copy(ad.cards, ac)
+	copy(bd.cards, bc)
 
 	sg := NewRecursiveCombat(ad, bd)
 	for sg.Play() {
@@ -223,7 +217,7 @@ func PartTwo(a, b *Deck) int64 {
 }
 
 func main() {
-	a, b := NewDeck(1), NewDeck(2)
+	a, b := NewDeck(1, 0), NewDeck(2, 0)
 	current := a
 
 	aoc.EachLine("input.txt", func(l string) {
