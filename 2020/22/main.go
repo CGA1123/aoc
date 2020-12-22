@@ -15,11 +15,11 @@ type Deck struct {
 }
 
 func NewDeck(player int64) *Deck {
-	return &Deck{player: player}
+	return &Deck{player: player, cards: make([]int64, 0, 100)}
 }
 
 func CopyDeck(d *Deck) *Deck {
-	slice := make([]int64, d.Size())
+	slice := make([]int64, d.Size(), 100)
 	copy(slice, d.cards)
 
 	return &Deck{player: d.Player(), cards: slice}
@@ -106,7 +106,7 @@ type RecursiveCombat struct {
 }
 
 func NewRecursiveCombat(a, b *Deck) *RecursiveCombat {
-	return &RecursiveCombat{a: a, b: b, previous: aoc.NewSet()}
+	return &RecursiveCombat{a: a, b: b, previous: aoc.NewSetWithSize(750)}
 }
 
 func (rc *RecursiveCombat) Winner() *Deck {

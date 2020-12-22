@@ -17,7 +17,7 @@ func Abs(i int64) int64 {
 }
 
 type Set struct {
-	set map[interface{}]bool
+	set map[interface{}]struct{}
 }
 
 func Intersection(sets ...*Set) *Set {
@@ -56,12 +56,20 @@ func Union(sets ...*Set) *Set {
 	return n
 }
 
+var set struct{}
+
+func NewSetWithSize(i int) *Set {
+	m := make(map[interface{}]struct{}, i)
+
+	return &Set{set: m}
+}
+
 func NewSet() *Set {
-	return &Set{set: map[interface{}]bool{}}
+	return &Set{set: map[interface{}]struct{}{}}
 }
 
 func (s *Set) Add(e interface{}) {
-	s.set[e] = true
+	s.set[e] = set
 }
 
 func (s *Set) Remove(e interface{}) {
