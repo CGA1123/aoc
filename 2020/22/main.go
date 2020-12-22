@@ -131,8 +131,25 @@ func (rc *RecursiveCombat) state() state {
 	return state{a: astate, b: bstate}
 }
 
+func Max(i []int64) int64 {
+	max := i[0]
+
+	for j := 1; j < len(i); j++ {
+		if i[j] > max {
+			max = i[j]
+		}
+	}
+
+	return max
+}
+
 func (rc *RecursiveCombat) subGame(sa, sb int64) *Deck {
 	ac, bc := rc.a.Cards()[:sa], rc.b.Cards()[:sb]
+
+	maxa := Max(ac)
+	if maxa > Max(bc) && maxa > (sa+sb-2) {
+		return rc.a
+	}
 
 	ad, bd := NewDeck(rc.a.Player(), len(ac)), NewDeck(rc.b.Player(), len(bc))
 	copy(ad.cards, ac)
@@ -217,6 +234,13 @@ func PartTwo(a, b *Deck) int64 {
 }
 
 func main() {
+	// cleanup, err := aoc.Profile()
+	// if err != nil {
+	// 	log.Printf("error profiling: %v", err)
+	// 	return
+	// }
+	// defer cleanup()
+
 	a, b := NewDeck(1, 0), NewDeck(2, 0)
 	current := a
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"runtime/pprof"
 	"strconv"
 )
 
@@ -243,4 +244,21 @@ func (h *Grid) Width() int64 {
 
 func (h *Grid) Count() int64 {
 	return int64(len(h.grid))
+}
+
+func Profile() (func(), error) {
+	f, err := os.Create("profile.cpu")
+	if err != nil {
+		return nil, fmt.Errorf("could not create CPU profile: %v", err)
+	}
+
+	if err := pprof.StartCPUProfile(f); err != nil {
+		f.Close()
+		return nil, fmt.Errorf("could not create CPU profile: %v", err)
+	}
+
+	return func() {
+		f.Close()
+		pprof.StopCPUProfile()
+	}, nil
 }
