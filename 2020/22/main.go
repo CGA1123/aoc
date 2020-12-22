@@ -1,12 +1,8 @@
 package main
 
 import (
-	"container/list"
-	"fmt"
 	"log"
 	"regexp"
-	"strconv"
-	"strings"
 
 	"github.com/CGA1123/aoc"
 )
@@ -15,20 +11,18 @@ var PlayerRegex = regexp.MustCompile(`Player (1|2):`)
 
 type Deck struct {
 	player int64
-	cards  *list.List
+	cards  []int64
 }
 
 func NewDeck(player int64) *Deck {
-	return &Deck{cards: list.New(), player: player}
+	return &Deck{player: player}
 }
 
 func CopyDeck(d *Deck) *Deck {
-	l := list.New()
-	for _, card := range d.Cards() {
-		l.PushBack(card)
-	}
+	slice := make([]int64, d.Size())
+	copy(slice, d.cards)
 
-	return &Deck{player: d.Player(), cards: l}
+	return &Deck{player: d.Player(), cards: slice}
 }
 
 func (d *Deck) Player() int64 {
@@ -36,31 +30,22 @@ func (d *Deck) Player() int64 {
 }
 
 func (d *Deck) Draw() int64 {
-	front := d.cards.Front()
+	c := d.cards[0]
+	d.cards = d.cards[1:]
 
-	return d.cards.Remove(front).(int64)
+	return c
 }
 
 func (d *Deck) Add(card int64) {
-	d.cards.PushBack(card)
+	d.cards = append(d.cards, card)
 }
 
 func (d *Deck) Size() int64 {
-	return int64(d.cards.Len())
+	return int64(len(d.cards))
 }
 
 func (d *Deck) Cards() []int64 {
-	var cards []int64
-
-	current := d.cards.Front()
-
-	for current != nil {
-		cards = append(cards, current.Value.(int64))
-
-		current = current.Next()
-	}
-
-	return cards
+	return d.cards
 }
 
 func (d *Deck) Score() int64 {
@@ -128,19 +113,22 @@ func (rc *RecursiveCombat) Winner() *Deck {
 	return rc.winner
 }
 
-func (rc *RecursiveCombat) state() string {
-	var astate []string
+type state struct {
+	a, b int64
+}
 
+func (rc *RecursiveCombat) state() state {
+	var astate int64
 	for _, card := range rc.a.Cards() {
-		astate = append(astate, strconv.FormatInt(card, 10))
+		astate = (astate * 100) + card
 	}
 
-	var bstate []string
+	var bstate int64
 	for _, card := range rc.b.Cards() {
-		bstate = append(bstate, strconv.FormatInt(card, 10))
+		bstate = (bstate * 100) + card
 	}
 
-	return fmt.Sprintf("%v|%v", strings.Join(astate, ","), strings.Join(bstate, ","))
+	return state{a: astate, b: bstate}
 }
 
 func (rc *RecursiveCombat) subGame(sa, sb int64) *Deck {
