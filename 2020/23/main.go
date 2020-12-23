@@ -64,13 +64,13 @@ func (cc *CrabCups) next() int {
 	return d
 }
 
-func (cc *CrabCups) Play() {
+func (cc *CrabCups) grab() {
 	cc.grabbed[0] = cc.cups[cc.current]
 	cc.grabbed[1] = cc.cups[cc.grabbed[0]]
 	cc.grabbed[2] = cc.cups[cc.grabbed[1]]
+}
 
-	next := cc.next()
-
+func (cc *CrabCups) update(next int) {
 	first, last := cc.grabbed[0], cc.grabbed[2]
 
 	cc.cups[cc.current] = cc.cups[last]
@@ -78,6 +78,13 @@ func (cc *CrabCups) Play() {
 	cc.cups[next] = first
 
 	cc.current = cc.cups[cc.current]
+}
+
+func (cc *CrabCups) Play() {
+	cc.grab()
+
+	next := cc.next()
+	cc.update(next)
 }
 
 func PartOne() string {
