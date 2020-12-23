@@ -258,7 +258,7 @@ func Profile() (func(), error) {
 	}
 
 	return func() {
-		f.Close()
 		pprof.StopCPUProfile()
+		f.Close()
 	}, nil
 }
