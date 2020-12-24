@@ -77,12 +77,22 @@ func Lex(line string) []Direction {
 	return directions
 }
 
+var neighbours = map[interface{}][]aoc.PointND{}
+
 func Neighbours(point aoc.PointND) []aoc.PointND {
+	key := point.Key()
+
+	if n, ok := neighbours[key]; ok {
+		return n
+	}
+
 	points := make([]aoc.PointND, 0, 6)
 
 	for _, v := range Vectors {
 		points = append(points, point.Add(v))
 	}
+
+	neighbours[key] = points
 
 	return points
 }
@@ -111,7 +121,7 @@ func NewState(t Tile, n int) Tile {
 	return t
 }
 
-func Tick(grid, tmp *aoc.GridND, p aoc.PointND, ticked map[string]bool) {
+func Tick(grid, tmp *aoc.GridND, p aoc.PointND, ticked map[interface{}]bool) {
 	if _, ok := ticked[p.Key()]; ok {
 		return
 	}
@@ -155,7 +165,7 @@ func main() {
 
 	for i := 0; i < 100; i++ {
 		tmp = aoc.NewGridND(3)
-		ticked := map[string]bool{}
+		ticked := map[interface{}]bool{}
 
 		grid.EachSparse(func(point aoc.PointND, el interface{}) {
 			Tick(grid, tmp, point, ticked)

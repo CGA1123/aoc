@@ -265,13 +265,30 @@ func Profile() (func(), error) {
 
 type PointND []int64
 
-func (p PointND) Key() string {
-	var str string
-	for _, x := range p {
-		str = fmt.Sprintf("%v,%v", str, x)
+func CantorPair(a, b int64) int64 {
+	return ((a + b) * (a + b + 1) / 2) + b
+}
+
+func CantorTuple(p []int64) int64 {
+	t := CantorPair(ZN(p[0]), ZN(p[1]))
+
+	for i := 2; i < len(p); i++ {
+		t = CantorPair(t, ZN(p[i]))
 	}
 
-	return str
+	return t
+}
+
+func ZN(i int64) int64 {
+	if i < 0 {
+		return i * -2
+	}
+
+	return (i * 2) - 1
+}
+
+func (p PointND) Key() interface{} {
+	return CantorTuple(p)
 }
 
 func (p PointND) Equal(o PointND) bool {
@@ -299,7 +316,7 @@ func (p PointND) Add(o PointND) PointND {
 }
 
 type GridND struct {
-	grid map[string]element
+	grid map[interface{}]element
 }
 
 type element struct {
@@ -308,7 +325,7 @@ type element struct {
 }
 
 func NewGridND(n int64) *GridND {
-	return &GridND{grid: map[string]element{}}
+	return &GridND{grid: map[interface{}]element{}}
 }
 
 func (g *GridND) Read(p PointND) interface{} {
