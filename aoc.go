@@ -262,3 +262,110 @@ func Profile() (func(), error) {
 		f.Close()
 	}, nil
 }
+
+type PointND []int64
+
+func (p PointND) Key() string {
+	var str string
+	for _, x := range p {
+		str = fmt.Sprintf("%v,%v", str, x)
+	}
+
+	return str
+}
+
+func (p PointND) Equal(o PointND) bool {
+	if len(p) != len(o) {
+		return false
+	}
+
+	for i, n := range p {
+		if o[i] != n {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (p PointND) Add(o PointND) PointND {
+	n := make([]int64, len(p))
+
+	for i, pi := range p {
+		n[i] = pi + o[i]
+	}
+
+	return PointND(n)
+}
+
+type GridND struct {
+	grid map[string]element
+}
+
+type element struct {
+	el    interface{}
+	point PointND
+}
+
+func NewGridND(n int64) *GridND {
+	return &GridND{grid: map[string]element{}}
+}
+
+func (g *GridND) Read(p PointND) interface{} {
+	if elem, ok := g.grid[p.Key()]; ok {
+		return elem.el
+	}
+
+	return nil
+}
+
+func (g *GridND) EachSparse(fn func(PointND, interface{})) {
+	for _, v := range g.grid {
+		fn(v.point, v.el)
+	}
+}
+
+func (g *GridND) Write(point PointND, el interface{}) {
+	g.grid[point.Key()] = element{el: el, point: point}
+}
+
+func (g *GridND) Remove(point PointND) {
+	delete(g.grid, point.Key())
+}
+
+func (g *GridND) Size() int {
+	return len(g.grid)
+}
+
+func genNeighbour(original, current PointND, idx int) []PointND {
+	var neighbours []PointND
+
+	if idx == len(current) {
+		if original.Equal(current) {
+			return []PointND{}
+		} else {
+			return []PointND{current}
+		}
+	}
+
+	for i := int64(-1); i <= 1; i++ {
+		candidate := make([]int64, len(current))
+		copy(candidate, current)
+
+		candidate[idx] += i
+
+		neighbours = append(
+			neighbours,
+			genNeighbour(original, PointND(candidate), idx+1)...,
+		)
+	}
+
+	return neighbours
+}
+
+func NeighboursND(point PointND) []PointND {
+	candidate := make([]int64, len(point))
+	copy(candidate, point)
+
+	return genNeighbour(point, candidate, 0)
+}
