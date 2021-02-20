@@ -386,3 +386,27 @@ func NeighboursND(point PointND) []PointND {
 
 	return genNeighbour(point, candidate, 0)
 }
+
+func Combinations(n, r int) [][]int {
+	var combinations func(int, int, int, []int) [][]int
+	combinations = func(n, r, min int, prefix []int) [][]int {
+		toBeSelected := r - len(prefix)
+
+		if toBeSelected == 0 {
+			return [][]int{prefix}
+		}
+
+		var combs [][]int
+
+		for i := min; i <= (n - toBeSelected); i++ {
+			combs = append(
+				combs,
+				combinations(n, r, i, append(prefix, i))...,
+			)
+		}
+
+		return combs
+	}
+
+	return combinations(n, r, 0, []int{})
+}
