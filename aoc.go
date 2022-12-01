@@ -11,7 +11,7 @@ import (
 
 func Abs(i int64) int64 {
 	if i < 0 {
-		return -1
+		return -1 * i
 	}
 
 	return i
@@ -208,6 +208,18 @@ func (h *Grid) Grid() [][]interface{} {
 	return grid
 }
 
+func (h *Grid) EachCol(fn func([]interface{})) {
+	for x := h.minx; x <= h.maxx; x++ {
+		var line []interface{}
+
+		for y := h.miny; y <= h.maxy; y++ {
+			line = append(line, h.grid[Point{X: x, Y: y}])
+		}
+
+		fn(line)
+	}
+}
+
 func (h *Grid) EachLine(fn func([]interface{})) {
 	for y := h.miny; y <= h.maxy; y++ {
 		var line []interface{}
@@ -244,6 +256,25 @@ func (h *Grid) Width() int64 {
 
 func (h *Grid) Count() int64 {
 	return int64(len(h.grid))
+}
+
+func (h *Grid) Neighbours(p Point) []Point {
+	neighbours := []Point{}
+
+	for i := int64(-1); i <= 1; i++ {
+		for j := int64(-1); j <= 1; j++ {
+			if j == 0 && i == 0 {
+				continue
+			}
+
+			neighbour := Point{X: p.X + i, Y: p.Y + j}
+			if h.Read(neighbour.X, neighbour.Y) != nil {
+				neighbours = append(neighbours, neighbour)
+			}
+		}
+	}
+
+	return neighbours
 }
 
 func Profile() (func(), error) {
