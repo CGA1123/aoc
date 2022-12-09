@@ -277,6 +277,26 @@ func (h *Grid) Neighbours(p Point) []Point {
 	return neighbours
 }
 
+func (h *Grid) Col(x int64) []interface{} {
+	col := make([]interface{}, h.Height())
+
+	for i := int64(0); i < h.Height(); i++ {
+		col[i] = h.Read(x, h.miny+i)
+	}
+
+	return col
+}
+
+func (h *Grid) Row(y int64) []interface{} {
+	row := make([]interface{}, h.Width())
+
+	for i := int64(0); i < h.Width(); i++ {
+		row[i] = h.Read(h.minx+i, y)
+	}
+
+	return row
+}
+
 func Profile() (func(), error) {
 	f, err := os.Create("profile.cpu")
 	if err != nil {
