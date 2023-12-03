@@ -100,7 +100,7 @@ func (s *Set) Elements() []interface{} {
 func MustParse(s string) int64 {
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic("bad input")
+		panic("bad input: " + s)
 	}
 
 	return i
